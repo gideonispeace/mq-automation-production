@@ -1,6 +1,14 @@
 pipeline {
     agent any
 
+    parameters {
+        choice(
+            name: 'PIPELINE_ACTION',
+            choices: ['ping', 'validate', 'deploy_mq'],
+            description: 'Choose which automation action to run'
+        )
+    }
+
     stages {
         stage('Verify Repo') {
             steps {
@@ -28,20 +36,19 @@ pipeline {
 
                     echo ""
                     echo "Workspace file tree:"
-                    find . -maxdepth 3 -type f | sort
+                    find . -maxdepth 4 -type f | sort
 
                     echo ""
                     echo "Inventory contents:"
                     cat inventory/hosts.ini
-
-                    echo ""
-                    echo "Playbook contents:"
-                    cat playbooks/ping.yml
                 '''
             }
         }
 
-        stage('Test SSH Connectivity') {
+        stage('Ping Targets') {
+            when {
+                expression { params.PIPELINE_ACTION == 'ping' }
+            }
             steps {
                 sh '''
                     ansible mq_targets -m ping
@@ -49,10 +56,24 @@ pipeline {
             }
         }
 
-        stage('Run Ansible Playbook') {
+        stage('Validate Targets') {
+            when {
+                expression { params.PIPELINE_ACTION == 'validate' }
+            }
             steps {
                 sh '''
-                    ansible-playbook playbooks/ping.yml
+                    ansible-playbook playbooks/validate_targets.yml
+                '''
+            }
+        }
+
+        stage('Deploy MQ Objects') {
+            when {
+                expression { params.PIPELINE_ACTION == 'deploy_mq' }
+            }
+            steps {
+                sh '''
+                    ansible-playbook playbooks/deploy_mq_objects.yml
                 '''
             }
         }

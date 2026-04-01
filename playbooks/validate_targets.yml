@@ -1,0 +1,31 @@
+---
+- name: Validate remote MQ targets
+  hosts: mq_targets
+  gather_facts: yes
+
+  tasks:
+    - name: Show hostname
+      ansible.builtin.debug:
+        msg: "Hostname is {{ ansible_hostname }}"
+
+    - name: Show operating system
+      ansible.builtin.debug:
+        msg: "OS is {{ ansible_distribution }} {{ ansible_distribution_version }}"
+
+    - name: Show current remote user
+      ansible.builtin.command: whoami
+      register: whoami_result
+      changed_when: false
+
+    - name: Print current remote user
+      ansible.builtin.debug:
+        msg: "Connected as {{ whoami_result.stdout }}"
+
+    - name: Check free space on root filesystem
+      ansible.builtin.command: df -h /
+      register: disk_result
+      changed_when: false
+
+    - name: Print root filesystem usage
+      ansible.builtin.debug:
+        var: disk_result.stdout_lines

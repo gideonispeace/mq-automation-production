@@ -1,0 +1,4 @@
+---
+mq_environment: lab
+mq_queue_manager: QM1
+mq_deploy_enabled: false

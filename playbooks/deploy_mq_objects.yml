@@ -1,0 +1,8 @@
+---
+- name: Deploy MQ objects
+  hosts: mq_targets
+  gather_facts: no
+
+  roles:
+    - role: mq_object_deploy
+      when: mq_deploy_enabled | bool

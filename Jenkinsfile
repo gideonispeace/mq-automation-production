@@ -10,5 +10,21 @@ pipeline {
                 '''
             }
         }
+
+        stage('Check Ansible') {
+            steps {
+                sh '''
+                    ansible --version
+                '''
+            }
+        }
+
+        stage('Run Ansible Playbook') {
+            steps {
+                sh '''
+                    ansible-playbook playbooks/ping.yml
+                '''
+            }
+        }
     }
 }

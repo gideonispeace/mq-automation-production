@@ -5,42 +5,23 @@ pipeline {
         choice(
             name: 'PIPELINE_ACTION',
             choices: ['ping', 'validate', 'deploy_mq'],
-            description: 'Choose which automation action to run'
+            description: 'Choose automation action'
         )
     }
 
     stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
         stage('Verify Repo') {
             steps {
                 sh '''
-                    echo "Repo pulled successfully"
+                    echo "Workspace:"
                     pwd
                     ls -la
-                '''
-            }
-        }
-
-        stage('Check Ansible') {
-            steps {
-                sh '''
-                    ansible --version
-                '''
-            }
-        }
-
-        stage('Inspect Workspace') {
-            steps {
-                sh '''
-                    echo "Current working directory:"
-                    pwd
-
-                    echo ""
-                    echo "Workspace file tree:"
-                    find . -maxdepth 4 -type f | sort
-
-                    echo ""
-                    echo "Inventory contents:"
-                    cat inventory/hosts.ini
                 '''
             }
         }
@@ -50,9 +31,7 @@ pipeline {
                 expression { params.PIPELINE_ACTION == 'ping' }
             }
             steps {
-                sh '''
-                    ansible mq_targets -m ping
-                '''
+                sh 'ansible mq_targets -m ping'
             }
         }
 
@@ -61,9 +40,7 @@ pipeline {
                 expression { params.PIPELINE_ACTION == 'validate' }
             }
             steps {
-                sh '''
-                    ansible-playbook playbooks/validate_targets.yml
-                '''
+                sh 'ansible-playbook playbooks/validate_targets.yml'
             }
         }
 
@@ -72,9 +49,7 @@ pipeline {
                 expression { params.PIPELINE_ACTION == 'deploy_mq' }
             }
             steps {
-                sh '''
-                    ansible-playbook playbooks/deploy_mq_objects.yml
-                '''
+                sh 'ansible-playbook playbooks/deploy_mq_objects.yml'
             }
         }
     }

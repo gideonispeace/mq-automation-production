@@ -1,0 +1,12 @@
+---
+- name: Verify remote connectivity
+  ansible.builtin.ping:
+
+- name: Show remote hostname
+  ansible.builtin.command: hostname
+  register: hostname_result
+  changed_when: false
+
+- name: Print remote hostname
+  ansible.builtin.debug:
+    msg: "Remote hostname is {{ hostname_result.stdout }}"

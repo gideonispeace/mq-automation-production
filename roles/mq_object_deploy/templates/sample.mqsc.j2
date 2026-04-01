@@ -1,2 +1,7 @@
-DEFINE QLOCAL(TEST.Q1) REPLACE
-DEFINE CHANNEL(TEST.SVRCONN) CHLTYPE(SVRCONN) REPLACE
+{% for obj in mq_objects %}
+{% if obj.type == "local_queue" %}
+DEFINE QLOCAL({{ obj.name }}) REPLACE
+{% elif obj.type == "channel" %}
+DEFINE CHANNEL({{ obj.name }}) CHLTYPE(SVRCONN) REPLACE
+{% endif %}
+{% endfor %}

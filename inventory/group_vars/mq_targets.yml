@@ -1,4 +1,14 @@
 ---
-mq_environment: lab
+mq_environment: dev
 mq_queue_manager: QM1
 mq_deploy_enabled: true
+
+mq_objects:
+  - name: TEST.Q1
+    type: local_queue
+
+  - name: TEST.Q2
+    type: local_queue
+
+  - name: TEST.SVRCONN
+    type: channel

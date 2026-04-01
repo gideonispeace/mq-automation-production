@@ -6,9 +6,7 @@ pipeline {
             steps {
                 sh '''
                     echo "Repo pulled successfully"
-                    echo "Current directory:"
                     pwd
-                    echo "Top-level contents:"
                     ls -la
                 '''
             }
@@ -33,20 +31,20 @@ pipeline {
                     find . -maxdepth 3 -type f | sort
 
                     echo ""
-                    echo "Git tree for current HEAD:"
-                    git ls-tree -r --name-only HEAD | sort
+                    echo "Inventory contents:"
+                    cat inventory/hosts.ini
 
                     echo ""
-                    echo "Playbooks directory details:"
-                    ls -la playbooks || true
+                    echo "Playbook contents:"
+                    cat playbooks/ping.yml
+                '''
+            }
+        }
 
-                    echo ""
-                    echo "Ping file details:"
-                    ls -l playbooks/ping.yml || true
-
-                    echo ""
-                    echo "Ping file contents:"
-                    cat playbooks/ping.yml || true
+        stage('Test SSH Connectivity') {
+            steps {
+                sh '''
+                    ansible mq_targets -m ping
                 '''
             }
         }

@@ -5,22 +5,32 @@
   changed_when: false
   failed_when: false
 
-- name: Show MQ deployment mode
+- name: Display MQ deployment mode
   ansible.builtin.debug:
-    msg: >-
-      MQ deployment for queue manager {{ mq_queue_manager }}.
-      runmqsc present: {{ runmqsc_check.rc == 0 }}
+    msg: >
+      MQ deployment for {{ inventory_hostname }}
+      Queue Manager: {{ mq_queue_manager }}
+      runmqsc available: {{ runmqsc_check.rc == 0 }}
 
 - name: Render MQSC template
   ansible.builtin.template:
     src: sample.mqsc.j2
-    dest: /tmp/sample.mqsc
+    dest: /tmp/{{ mq_queue_manager }}.mqsc
 
-- name: Simulate MQ object deployment when runmqsc is missing
+- name: Show generated MQSC file
+  ansible.builtin.command: cat /tmp/{{ mq_queue_manager }}.mqsc
+  register: mqsc_output
+  changed_when: false
+
+- name: Print MQSC content
   ansible.builtin.debug:
-    msg: "runmqsc not found. Simulating deployment using /tmp/sample.mqsc"
+    var: mqsc_output.stdout_lines
+
+- name: Simulate MQ deployment if MQ not installed
+  ansible.builtin.debug:
+    msg: "Simulating MQ deployment on {{ inventory_hostname }}"
   when: runmqsc_check.rc != 0
 
-- name: Run MQSC commands when runmqsc exists
-  ansible.builtin.shell: "runmqsc {{ mq_queue_manager }} < /tmp/sample.mqsc"
+- name: Execute MQSC commands
+  ansible.builtin.shell: "runmqsc {{ mq_queue_manager }} < /tmp/{{ mq_queue_manager }}.mqsc"
   when: runmqsc_check.rc == 0

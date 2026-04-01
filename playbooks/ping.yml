@@ -1,8 +1,8 @@
 ---
-- name: Test Ansible execution
-  hosts: local
+- name: Test Ansible SSH execution
+  hosts: mq_targets
   gather_facts: no
 
   tasks:
-    - name: Ping localhost
+    - name: Ping remote target
       ansible.builtin.ping:

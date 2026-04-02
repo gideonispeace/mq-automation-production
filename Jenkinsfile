@@ -14,6 +14,10 @@ pipeline {
         )
     }
 
+    environment {
+        EFFECTIVE_TARGET = "${params.TARGET_LIMIT?.trim() ? params.TARGET_LIMIT.trim() : 'mqnode1'}"
+    }
+
     stages {
         stage('Checkout') {
             steps {
@@ -27,6 +31,9 @@ pipeline {
                     echo "Workspace:"
                     pwd
                     ls -la
+                    echo "PIPELINE_ACTION=${PIPELINE_ACTION}"
+                    echo "TARGET_LIMIT=${TARGET_LIMIT}"
+                    echo "EFFECTIVE_TARGET=${EFFECTIVE_TARGET}"
                 '''
             }
         }
@@ -37,7 +44,7 @@ pipeline {
             }
             steps {
                 sh '''
-                    ansible "${TARGET_LIMIT}" -m ping
+                    ansible "${EFFECTIVE_TARGET}" -m ping
                 '''
             }
         }
@@ -48,7 +55,7 @@ pipeline {
             }
             steps {
                 sh '''
-                    ansible-playbook playbooks/validate_targets.yml --limit "${TARGET_LIMIT}"
+                    ansible-playbook playbooks/validate_targets.yml --limit "${EFFECTIVE_TARGET}"
                 '''
             }
         }
@@ -59,7 +66,7 @@ pipeline {
             }
             steps {
                 sh '''
-                    ansible-playbook playbooks/deploy_mq_objects.yml --limit "${TARGET_LIMIT}"
+                    ansible-playbook playbooks/deploy_mq_objects.yml --limit "${EFFECTIVE_TARGET}"
                 '''
             }
         }

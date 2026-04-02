@@ -43,6 +43,7 @@
           path={{ podman_result.stdout | default('not found') }}
 
     - name: Check whether MQ container is running
+      become: true
       ansible.builtin.command: podman ps --filter name=mq-dev --format "{{'{{'}}.Names{{'}}'}}"
       register: mq_container_result
       changed_when: false
@@ -54,6 +55,7 @@
           mq-dev container={{ mq_container_result.stdout | default('not running') }}
 
     - name: Check queue manager status inside container
+      become: true
       ansible.builtin.command: podman exec mq-dev dspmq
       register: dspmq_output
       changed_when: false
@@ -66,6 +68,7 @@
       when: mq_container_result.stdout == "mq-dev"
 
     - name: Check runmqsc inside container
+      become: true
       ansible.builtin.shell: |
         podman exec mq-dev bash -lc "echo 'DISPLAY QMGR' | runmqsc {{ mq_queue_manager }}"
       register: runmqsc_output

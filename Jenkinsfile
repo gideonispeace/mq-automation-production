@@ -7,15 +7,20 @@ pipeline {
             choices: ['ping', 'validate', 'deploy_mq'],
             description: 'Choose automation action'
         )
+        choice(
+            name: 'TARGET_ENV',
+            choices: ['mq_nonprod', 'mq_prod'],
+            description: 'Choose target environment group'
+        )
         string(
             name: 'TARGET_LIMIT',
-            defaultValue: 'mqnode1',
-            description: 'Host or group to target, for example mqnode1 or mq_targets'
+            defaultValue: '',
+            description: 'Optional host override, for example mqnode1. Leave blank to use TARGET_ENV.'
         )
     }
 
     environment {
-        EFFECTIVE_TARGET = "${params.TARGET_LIMIT?.trim() ? params.TARGET_LIMIT.trim() : 'mqnode1'}"
+        EFFECTIVE_TARGET = "${params.TARGET_LIMIT?.trim() ? params.TARGET_LIMIT.trim() : params.TARGET_ENV}"
     }
 
     stages {
@@ -32,6 +37,7 @@ pipeline {
                     pwd
                     ls -la
                     echo "PIPELINE_ACTION=${PIPELINE_ACTION}"
+                    echo "TARGET_ENV=${TARGET_ENV}"
                     echo "TARGET_LIMIT=${TARGET_LIMIT}"
                     echo "EFFECTIVE_TARGET=${EFFECTIVE_TARGET}"
                 '''

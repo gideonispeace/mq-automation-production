@@ -67,7 +67,7 @@
         var: dspmq_output.stdout_lines
       when: mq_container_result.stdout == "mq-dev"
 
-    - name: Check runmqsc inside container
+    - name: Check queue manager details inside container
       become: true
       ansible.builtin.shell: |
         podman exec mq-dev bash -lc "echo 'DISPLAY QMGR' | runmqsc {{ mq_queue_manager }}"
@@ -79,4 +79,23 @@
     - name: Print runmqsc output
       ansible.builtin.debug:
         var: runmqsc_output.stdout_lines
+      when: mq_container_result.stdout == "mq-dev"
+
+    - name: Validate created MQ objects
+      become: true
+      ansible.builtin.shell: |
+        podman exec mq-dev bash -lc "printf '%s\n' \
+        'DISPLAY QLOCAL(APP.INPUT.Q)' \
+        'DISPLAY QLOCAL(APP.OUTPUT.Q)' \
+        'DISPLAY QLOCAL(APP.ERROR.Q)' \
+        'DISPLAY CHANNEL(APP.SVRCONN)' \
+        | runmqsc {{ mq_queue_manager }}"
+      register: mq_objects_validation
+      changed_when: false
+      failed_when: false
+      when: mq_container_result.stdout == "mq-dev"
+
+    - name: Print MQ object validation output
+      ansible.builtin.debug:
+        var: mq_objects_validation.stdout_lines
       when: mq_container_result.stdout == "mq-dev"

@@ -1,0 +1,17 @@
+---
+mq_environment: nonprod
+mq_queue_manager: QM1
+mq_deploy_enabled: true
+
+mq_objects:
+  - name: APP.INPUT.Q
+    type: local_queue
+
+  - name: APP.OUTPUT.Q
+    type: local_queue
+
+  - name: APP.ERROR.Q
+    type: local_queue
+
+  - name: APP.SVRCONN
+    type: channel

@@ -1,8 +1,13 @@
 ---
 - name: Check if MQ container exists
+  become: true
   ansible.builtin.command: podman ps --filter "name=mq-dev" --format "{{'{{'}}.Names{{'}}'}}"
   register: podman_check
   changed_when: false
+
+- name: Show container check result
+  ansible.builtin.debug:
+    msg: "Detected container name: {{ podman_check.stdout | default('none') }}"
 
 - name: Fail if MQ container is not running
   ansible.builtin.fail:
@@ -24,10 +29,12 @@
     var: mqsc_output.stdout_lines
 
 - name: Copy MQSC file into container
+  become: true
   ansible.builtin.command: >
     podman cp /tmp/{{ mq_queue_manager }}.mqsc mq-dev:/tmp/{{ mq_queue_manager }}.mqsc
 
 - name: Execute MQSC inside container
+  become: true
   ansible.builtin.command: >
     podman exec mq-dev bash -lc "runmqsc {{ mq_queue_manager }} < /tmp/{{ mq_queue_manager }}.mqsc"
   register: mq_exec

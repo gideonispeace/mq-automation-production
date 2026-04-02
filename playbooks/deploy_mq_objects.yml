@@ -5,4 +5,3 @@
 
   roles:
     - role: mq_object_deploy
-      when: mq_deploy_enabled | bool

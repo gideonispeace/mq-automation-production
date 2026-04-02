@@ -1,23 +1,25 @@
-pipeline {
-    agent any
-
-    parameters {
+properties([
+    parameters([
         choice(
             name: 'PIPELINE_ACTION',
             choices: ['ping', 'validate', 'deploy_mq'],
             description: 'Choose automation action'
-        )
+        ),
         choice(
             name: 'TARGET_ENV',
             choices: ['mq_nonprod', 'mq_prod'],
             description: 'Choose target environment group'
-        )
+        ),
         string(
             name: 'TARGET_LIMIT',
             defaultValue: '',
             description: 'Optional host override, for example mqnode1. Leave blank to use TARGET_ENV.'
         )
-    }
+    ])
+])
+
+pipeline {
+    agent any
 
     environment {
         EFFECTIVE_TARGET = "${params.TARGET_LIMIT?.trim() ? params.TARGET_LIMIT.trim() : params.TARGET_ENV}"

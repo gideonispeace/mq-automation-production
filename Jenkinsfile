@@ -13,7 +13,7 @@ properties([
         string(
             name: 'TARGET_LIMIT',
             defaultValue: '',
-            description: 'Optional host override, for example mqnode1. Leave blank to use TARGET_ENV.'
+            description: 'Optional host override'
         )
     ])
 ])
@@ -48,7 +48,11 @@ pipeline {
                 expression { params.PIPELINE_ACTION == 'ping' }
             }
             steps {
-                sh 'ansible "${EFFECTIVE_TARGET}" -m ping'
+                sshagent(credentials: ['mq-ssh-key']) {
+                    sh '''
+                        ansible "${EFFECTIVE_TARGET}" -m ping
+                    '''
+                }
             }
         }
 
@@ -57,7 +61,11 @@ pipeline {
                 expression { params.PIPELINE_ACTION == 'validate' }
             }
             steps {
-                sh 'ansible-playbook playbooks/validate_targets.yml --limit "${EFFECTIVE_TARGET}"'
+                sshagent(credentials: ['mq-ssh-key']) {
+                    sh '''
+                        ansible-playbook playbooks/validate_targets.yml --limit "${EFFECTIVE_TARGET}"
+                    '''
+                }
             }
         }
 
@@ -78,7 +86,11 @@ pipeline {
                 expression { params.PIPELINE_ACTION == 'deploy_mq' }
             }
             steps {
-                sh 'ansible-playbook playbooks/deploy_mq_objects.yml --limit "${EFFECTIVE_TARGET}"'
+                sshagent(credentials: ['mq-ssh-key']) {
+                    sh '''
+                        ansible-playbook playbooks/deploy_mq_objects.yml --limit "${EFFECTIVE_TARGET}"
+                    '''
+                }
             }
         }
     }

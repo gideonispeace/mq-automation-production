@@ -1,42 +1,20 @@
 ---
-- name: Check whether runmqsc is available
-  ansible.builtin.command: which runmqsc
-  register: runmqsc_check
+- name: Check if MQ container exists
+  ansible.builtin.command: podman ps --filter "name=mq-dev" --format "{{'{{'}}.Names{{'}}'}}"
+  register: podman_check
   changed_when: false
-  failed_when: false
 
-- name: Check whether dspmq is available
-  ansible.builtin.command: which dspmq
-  register: dspmq_check
-  changed_when: false
-  failed_when: false
-
-- name: Show MQ deployment mode
-  ansible.builtin.debug:
-    msg: >-
-      MQ deployment for {{ inventory_hostname }}
-      Queue Manager: {{ mq_queue_manager }}
-      runmqsc available: {{ runmqsc_check.rc == 0 }}
-      dspmq available: {{ dspmq_check.rc == 0 }}
-
-- name: List queue managers when dspmq exists
-  ansible.builtin.command: dspmq
-  register: dspmq_output
-  changed_when: false
-  failed_when: false
-  when: dspmq_check.rc == 0
-
-- name: Print queue manager list
-  ansible.builtin.debug:
-    var: dspmq_output.stdout_lines
-  when: dspmq_check.rc == 0
+- name: Fail if MQ container is not running
+  ansible.builtin.fail:
+    msg: "MQ container mq-dev is not running"
+  when: podman_check.stdout != "mq-dev"
 
 - name: Render MQSC template
   ansible.builtin.template:
     src: sample.mqsc.j2
     dest: /tmp/{{ mq_queue_manager }}.mqsc
 
-- name: Show rendered MQSC file
+- name: Show generated MQSC file
   ansible.builtin.command: cat /tmp/{{ mq_queue_manager }}.mqsc
   register: mqsc_output
   changed_when: false
@@ -45,23 +23,17 @@
   ansible.builtin.debug:
     var: mqsc_output.stdout_lines
 
-- name: Simulate MQ deployment when MQ tools are missing
-  ansible.builtin.debug:
-    msg: "MQ tools not fully available. Simulating deployment on {{ inventory_hostname }}"
-  when: runmqsc_check.rc != 0 or dspmq_check.rc != 0
+- name: Copy MQSC file into container
+  ansible.builtin.command: >
+    podman cp /tmp/{{ mq_queue_manager }}.mqsc mq-dev:/tmp/{{ mq_queue_manager }}.mqsc
 
-- name: Execute MQSC commands when MQ tools exist and deployment is enabled
-  ansible.builtin.shell: "runmqsc {{ mq_queue_manager }} < /tmp/{{ mq_queue_manager }}.mqsc"
-  register: runmqsc_exec
-  when:
-    - runmqsc_check.rc == 0
-    - dspmq_check.rc == 0
-    - mq_deploy_enabled | bool
+- name: Execute MQSC inside container
+  ansible.builtin.command: >
+    podman exec mq-dev bash -lc "runmqsc {{ mq_queue_manager }} < /tmp/{{ mq_queue_manager }}.mqsc"
+  register: mq_exec
+  when: mq_deploy_enabled | bool
 
-- name: Print runmqsc output
+- name: Show MQ execution output
   ansible.builtin.debug:
-    var: runmqsc_exec.stdout_lines
-  when:
-    - runmqsc_check.rc == 0
-    - dspmq_check.rc == 0
-    - mq_deploy_enabled | bool
+    var: mq_exec.stdout_lines
+  when: mq_deploy_enabled | bool

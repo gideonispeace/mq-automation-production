@@ -7,6 +7,11 @@ pipeline {
             choices: ['ping', 'validate', 'deploy_mq'],
             description: 'Choose automation action'
         )
+        string(
+            name: 'TARGET_LIMIT',
+            defaultValue: 'mqnode1',
+            description: 'Host or group to target, for example mqnode1 or mq_targets'
+        )
     }
 
     stages {
@@ -31,7 +36,9 @@ pipeline {
                 expression { params.PIPELINE_ACTION == 'ping' }
             }
             steps {
-                sh 'ansible mq_targets -m ping'
+                sh '''
+                    ansible "${TARGET_LIMIT}" -m ping
+                '''
             }
         }
 
@@ -40,7 +47,9 @@ pipeline {
                 expression { params.PIPELINE_ACTION == 'validate' }
             }
             steps {
-                sh 'ansible-playbook playbooks/validate_targets.yml'
+                sh '''
+                    ansible-playbook playbooks/validate_targets.yml --limit "${TARGET_LIMIT}"
+                '''
             }
         }
 
@@ -49,7 +58,9 @@ pipeline {
                 expression { params.PIPELINE_ACTION == 'deploy_mq' }
             }
             steps {
-                sh 'ansible-playbook playbooks/deploy_mq_objects.yml'
+                sh '''
+                    ansible-playbook playbooks/deploy_mq_objects.yml --limit "${TARGET_LIMIT}"
+                '''
             }
         }
     }

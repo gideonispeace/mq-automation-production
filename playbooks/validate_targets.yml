@@ -29,3 +29,39 @@
     - name: Print root filesystem usage
       ansible.builtin.debug:
         var: disk_result.stdout_lines
+
+    - name: Check whether runmqsc is available
+      ansible.builtin.command: which runmqsc
+      register: runmqsc_result
+      changed_when: false
+      failed_when: false
+
+    - name: Show runmqsc location
+      ansible.builtin.debug:
+        msg: >-
+          runmqsc rc={{ runmqsc_result.rc }}
+          path={{ runmqsc_result.stdout | default('not found') }}
+
+    - name: Check whether dspmq is available
+      ansible.builtin.command: which dspmq
+      register: dspmq_result
+      changed_when: false
+      failed_when: false
+
+    - name: Show dspmq location
+      ansible.builtin.debug:
+        msg: >-
+          dspmq rc={{ dspmq_result.rc }}
+          path={{ dspmq_result.stdout | default('not found') }}
+
+    - name: List queue managers when dspmq exists
+      ansible.builtin.command: dspmq
+      register: dspmq_output
+      changed_when: false
+      failed_when: false
+      when: dspmq_result.rc == 0
+
+    - name: Print queue manager list
+      ansible.builtin.debug:
+        var: dspmq_output.stdout_lines
+      when: dspmq_result.rc == 0

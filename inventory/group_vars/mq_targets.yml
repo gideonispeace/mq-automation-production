@@ -1,14 +1,17 @@
 ---
 mq_environment: dev
 mq_queue_manager: QM1
-mq_deploy_enabled: true
+mq_deploy_enabled: false
 
 mq_objects:
-  - name: TEST.Q1
+  - name: APP.INPUT.Q
     type: local_queue
 
-  - name: TEST.Q2
+  - name: APP.OUTPUT.Q
     type: local_queue
 
-  - name: TEST.SVRCONN
+  - name: APP.ERROR.Q
+    type: local_queue
+
+  - name: APP.SVRCONN
     type: channel

@@ -1,7 +1,7 @@
 ---
 mq_environment: dev
 mq_queue_manager: QM1
-mq_deploy_enabled: false
+mq_deploy_enabled: true
 
 mq_objects:
   - name: APP.INPUT.Q

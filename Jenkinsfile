@@ -35,9 +35,6 @@ pipeline {
         stage('Verify Repo') {
             steps {
                 sh '''
-                    echo "Workspace:"
-                    pwd
-                    ls -la
                     echo "PIPELINE_ACTION=${PIPELINE_ACTION}"
                     echo "TARGET_ENV=${TARGET_ENV}"
                     echo "TARGET_LIMIT=${TARGET_LIMIT}"
@@ -51,9 +48,7 @@ pipeline {
                 expression { params.PIPELINE_ACTION == 'ping' }
             }
             steps {
-                sh '''
-                    ansible "${EFFECTIVE_TARGET}" -m ping
-                '''
+                sh 'ansible "${EFFECTIVE_TARGET}" -m ping'
             }
         }
 
@@ -62,9 +57,19 @@ pipeline {
                 expression { params.PIPELINE_ACTION == 'validate' }
             }
             steps {
-                sh '''
-                    ansible-playbook playbooks/validate_targets.yml --limit "${EFFECTIVE_TARGET}"
-                '''
+                sh 'ansible-playbook playbooks/validate_targets.yml --limit "${EFFECTIVE_TARGET}"'
+            }
+        }
+
+        stage('🚨 Approval for PROD') {
+            when {
+                expression {
+                    params.PIPELINE_ACTION == 'deploy_mq' &&
+                    params.TARGET_ENV == 'mq_prod'
+                }
+            }
+            steps {
+                input message: "Deploying to PROD. Approve to continue?", ok: "Deploy"
             }
         }
 
@@ -73,9 +78,7 @@ pipeline {
                 expression { params.PIPELINE_ACTION == 'deploy_mq' }
             }
             steps {
-                sh '''
-                    ansible-playbook playbooks/deploy_mq_objects.yml --limit "${EFFECTIVE_TARGET}"
-                '''
+                sh 'ansible-playbook playbooks/deploy_mq_objects.yml --limit "${EFFECTIVE_TARGET}"'
             }
         }
     }

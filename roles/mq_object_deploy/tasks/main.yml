@@ -5,19 +5,38 @@
   changed_when: false
   failed_when: false
 
-- name: Display MQ deployment mode
+- name: Check whether dspmq is available
+  ansible.builtin.command: which dspmq
+  register: dspmq_check
+  changed_when: false
+  failed_when: false
+
+- name: Show MQ deployment mode
   ansible.builtin.debug:
-    msg: >
+    msg: >-
       MQ deployment for {{ inventory_hostname }}
       Queue Manager: {{ mq_queue_manager }}
       runmqsc available: {{ runmqsc_check.rc == 0 }}
+      dspmq available: {{ dspmq_check.rc == 0 }}
+
+- name: List queue managers when dspmq exists
+  ansible.builtin.command: dspmq
+  register: dspmq_output
+  changed_when: false
+  failed_when: false
+  when: dspmq_check.rc == 0
+
+- name: Print queue manager list
+  ansible.builtin.debug:
+    var: dspmq_output.stdout_lines
+  when: dspmq_check.rc == 0
 
 - name: Render MQSC template
   ansible.builtin.template:
     src: sample.mqsc.j2
     dest: /tmp/{{ mq_queue_manager }}.mqsc
 
-- name: Show generated MQSC file
+- name: Show rendered MQSC file
   ansible.builtin.command: cat /tmp/{{ mq_queue_manager }}.mqsc
   register: mqsc_output
   changed_when: false
@@ -26,11 +45,23 @@
   ansible.builtin.debug:
     var: mqsc_output.stdout_lines
 
-- name: Simulate MQ deployment if MQ not installed
+- name: Simulate MQ deployment when MQ tools are missing
   ansible.builtin.debug:
-    msg: "Simulating MQ deployment on {{ inventory_hostname }}"
-  when: runmqsc_check.rc != 0
+    msg: "MQ tools not fully available. Simulating deployment on {{ inventory_hostname }}"
+  when: runmqsc_check.rc != 0 or dspmq_check.rc != 0
 
-- name: Execute MQSC commands
+- name: Execute MQSC commands when MQ tools exist and deployment is enabled
   ansible.builtin.shell: "runmqsc {{ mq_queue_manager }} < /tmp/{{ mq_queue_manager }}.mqsc"
-  when: runmqsc_check.rc == 0
+  register: runmqsc_exec
+  when:
+    - runmqsc_check.rc == 0
+    - dspmq_check.rc == 0
+    - mq_deploy_enabled | bool
+
+- name: Print runmqsc output
+  ansible.builtin.debug:
+    var: runmqsc_exec.stdout_lines
+  when:
+    - runmqsc_check.rc == 0
+    - dspmq_check.rc == 0
+    - mq_deploy_enabled | bool
